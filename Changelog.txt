@@ -1,0 +1,3 @@
+16/11/21 Replaced File naming system. Now uses siteID and NodeID versus project and NodeID
+
+13/01/22 Repalced now.year() < 2020 to now.year() < Year because rtc gets overridden if upload date is later than current date not taking year into account

@@ -1,0 +1,36 @@
+M.E.L.T. SYSTEM CONFIG FILE
+- Ensure the number after config filename matches system firmware (Eg. FW version 103 for CFG_103.txt)
+- When in doubt, assign value as DEFAULT
+- Config format is as follows: "ConfigVariable=Value;"
+- Whitespace is ignored. Anything after the semicolon is ignored. Any line that does not contain a ConfigVariable is ignored. 
+
+SYSTEM CONFIG___________________________________________________
+Project_ID	=TST;		//3 character MAX
+Site_ID		=AA;		//3 character MAX
+Node_ID		=YEET;		//4 character MAX
+LoRaPollOffset	=23;		//Packet send offset (seconds)
+PollPerLoRa	=5;		//Cycles per LoRa packet
+LoRa_EN		=1;		//LoRa enabled. Set 0 or 1
+SD_EN		=1;		//SD logging enabled. Set 0 or 1
+
+LORA REPEATER SETTINGS__________________________________________
+LoRaRepeater	=0;		//Set as 1 to use exclusively as LoRa repeater
+Nodes_to_repeat ={BBMO,BBBA,ASSS};	//Max 10 nodes
+
+SENSORS_________________________________________________________
+ALS_Count	=1;		//How many ALS sensors connected
+ALS_Period	=1;		//ALS poll period (minutes)
+ALS_cal_temps	={6,15,22,29};		//From smallest to largest
+ALS_cal_slopes	={1.271525,1.28783,1.299304,1.30235};		//Same order as temp
+ALS_cal_offsets	={-1250.34,-1290.16,-1321.63,-1331.37};		//Same order as temp
+Temp_Count	=1;		//This is automatically detected. No need to change
+Temp_Period	=1;		//Temp poll period (minutes)
+USS_Count	=0;		//How many Ultrasonic sensors connected
+USS_Period	=DEFAULT;		//USS poll period (minutes)
+OTT_Count	=0;		//How many OTT probes connected
+OTT_Period	=DEFAULT;		//OTT poll period (minutes)
+Raingauge_Count	=0;		//How many rain gauges connected
+Raingauge_Period=DEFAULT;		//Raingauge poll period (minutes)
+Raingauge_mm	=DEFAULT;		//Raingauge tip volume (mm)
+RTC_Temp_Count	=1;		//Use RTC temperature. Set 0 or 1
+RTC_Temp_Period	=1;		//RTC temp poll period (minutes)
