@@ -1,6 +1,6 @@
 /*
-  Main branch
-  Kai James kaicjames@outlook.com
+Forked by Axel Baylon axelbaylon@hotmail.com based off
+Kai James kaicjames@outlook.com code for Melt Sensors
 */
 #include <SDI12.h>
 #include "RTClib.h"
@@ -177,7 +177,7 @@ void setup () {
   OneWireTempSetup(); //Must auto detect sensors BEFORE configRead()
   configRead();
   sendLoRaIgnore("Config updated");
-  
+
 
   while (LoRaRepeater) {
     LoRaListen(999);   //Enter 999 for no timeout
@@ -264,7 +264,7 @@ void setup () {
   String currHeader = logFile.readStringUntil('\n');
   logFileSize = logFile.size();
   logFile.close();
-  if(logFileSize == 0 && logFileSizeLast == 0){ //Quick check for SD driver crash
+  if (logFileSize == 0 && logFileSizeLast == 0) { //Quick check for SD driver crash
     systemReset();
   }
   logFileSizeLast = logFileSize;
@@ -299,7 +299,7 @@ void setup () {
   }
   int uploadTime = Min + Hour * 60 + Day * 24 * 60 + (monthIndex + 1) * 24 * 60 * 31;
   int RTCTime = now.minute() + now.hour() * 60 + now.day() * 24 * 60 + now.month() * 24 * 60 * 31;
-  if (now.year() < Year || RTCTime < uploadTime) {
+  if (RTCTime < uploadTime || now.year() < Year) {
     if (Sec >= 60 - RTC_OFFSET_S) {
       Min = Min + 1;
       Sec = Sec + RTC_OFFSET_S - 60;
@@ -357,21 +357,21 @@ void loop () {
   DateTime now;
   if (sensor.rainGauge.sensorCount > 0) {
     rainfall_mm = tip_count * raingaugeTip_mm;
-    if(RAIN_CUMULATIVE){
-    now = rtc.now();
-    if (now.hour() == 0) {
-      if (dailyReset) {
-        tip_count = 0;
-        dailyReset = false;
+    if (RAIN_CUMULATIVE) {
+      now = rtc.now();
+      if (now.hour() == 0) {
+        if (dailyReset) {
+          tip_count = 0;
+          dailyReset = false;
+        }
+      }
+      else if (!dailyReset) {
+        dailyReset = true;
       }
     }
-    else if (!dailyReset) {
-      dailyReset = true;
+    else {
+      tip_count = 0;
     }
-  }
-  else{
-    tip_count = 0;
-  }
   }
 
   if (sensor.temp.sensorCount > 0) {
@@ -691,7 +691,7 @@ bool USSUpdate() {
   float dist = duration / 2 * 0.000343;
   delay(50);
   sensor.USS.measure[0] = dist;   //Should return duration and have temp compensation
-  digitalWrite(FET_POWER,LOW);
+  digitalWrite(FET_POWER, LOW);
   return true;
 }
 
@@ -1062,7 +1062,7 @@ void OneWireTempSetup() {
   for (int i = 0;  i < sensor.temp.sensorCount;  i++) { //For each sensor, grab the value we will label with (Nibble 1 and 7 of full device address)
     tempSensors.getAddress(Thermometer, i);
     humanVal[i] = 256 * Thermometer[1] + Thermometer[2];
-    sendLoRaIgnore("Temp_Address_" + String(i) + " = " + String(humanVal[i])+". Temp = "+String(tempSensors.getTempCByIndex(i)));
+    sendLoRaIgnore("Temp_Address_" + String(i) + " = " + String(humanVal[i]) + ". Temp = " + String(tempSensors.getTempCByIndex(i)));
   }
   int arrayIndex[4] = {0, 1, 2, 3}; //This is how we will keep track of the order of the devices after sorting
   bubbleSort(humanVal, arrayIndex, sensor.temp.sensorCount);  //Sorts from smallest to largest. arrayIndex tells us where each value moved.
