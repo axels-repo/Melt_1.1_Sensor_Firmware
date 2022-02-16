@@ -158,10 +158,8 @@ void setup () {
     crashNflash(1);  //10*10ms high period
   }
 
-  logFile = SD.open("debug.txt", FILE_WRITE);
-
   if (battVoltUpdate() < 3.5) { // If battery less that 3.5v, sleep and reset via wdt
-    logFile.println("Startup failed. Battery voltage = " + String(battVoltUpdate()) + " system will restart n");
+    debugWrite("Startup failed. Battery voltage = " + String(battVoltUpdate()) + " system will restart \n");
     SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
     __DSB();
@@ -169,7 +167,7 @@ void setup () {
     SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
   };
 
-  logFile.close();
+  
   
   sensor.RTCTemp.sensorCount = 1;
   hexstr(getChipId(), addr, sizeof(addr));  //Establish default node ID. Overwrite if specified in config
@@ -344,6 +342,8 @@ void setup () {
 
 
   setupWDT( WATCHDOG_TIMER_MS ); // initialize and activate WDT with maximum period
+
+  debugWrite(String("Node ") + NodeID + " successfuly started. Start time: "+normTimestamp+"\n");
   //Rain gauge. Add last to ensure the interrupt doesn't interfere with initial time sync
   if (sensor.rainGauge.sensorCount > 0) {
     pinMode(RAIN_GAUGE_INT, INPUT_PULLUP);
@@ -369,8 +369,7 @@ void loop () {
   resetWDT();
   
   if (battVoltUpdate() < 3.5) { // If battery less that 3.5v, sleep and reset via wdt
-    logFile = SD.open("debug.txt", FILE_WRITE);
-    logFile.println("Loop restart at: " + normTimestamp +". Battery voltage = " + String(battVoltUpdate()) + " system will restart \n");
+    debugWrite("Loop restart at: " + normTimestamp +". Battery voltage = " + String(battVoltUpdate()) + " system will restart \n");
     SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
     __DSB();
@@ -1100,3 +1099,9 @@ void OneWireTempSetup() {
   }
   digitalWrite(FET_POWER, HIGH);  //Switch off temp sensor
 }
+
+void debugWrite(String dbg){
+  logFile = SD.open("debug.txt", FILE_WRITE);
+  logFile.println(dbg);
+  logFile.close();
+  }
