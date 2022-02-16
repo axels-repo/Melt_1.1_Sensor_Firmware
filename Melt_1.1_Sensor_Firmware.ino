@@ -1,6 +1,6 @@
 /*
-Forked by Axel Baylon axelbaylon@hotmail.com based off
-Kai James kaicjames@outlook.com code for Melt Sensors
+  Forked by Axel Baylon axelbaylon@hotmail.com based off
+  Kai James kaicjames@outlook.com code for Melt Sensors
 */
 #include <SDI12.h>
 #include "RTClib.h"
@@ -15,7 +15,7 @@ Kai James kaicjames@outlook.com code for Melt Sensors
 
 #define TEST_LOOP             (false)     //Run test loop instead of actual loop
 #define SLEEP_ENABLED         (true)    //Disable to keep serial coms alive for testing
-#define FIRMWARE_VERSION      (104)
+#define FIRMWARE_VERSION      (105)
 #define BV_OFFSET             (0.01)
 #define OTT_OFFSET            (0.15)
 #define ALS_POWER_WAIT        (1000) //Depends on probe. 1000 is safe
@@ -150,6 +150,27 @@ volatile bool rain_interrupt = false;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup () {
+  setupWDT( WATCHDOG_TIMER_MS );
+
+    //SD card
+  if (!SD.begin(SD_SPI_CS)) {
+    //SerialUSB.println("SD initialization failed!");
+    crashNflash(1);  //10*10ms high period
+  }
+
+  logFile = SD.open("debug.txt", FILE_WRITE);
+
+  if (battVoltUpdate() < 3.5) { // If battery less that 3.5v, sleep and reset via wdt
+    logFile.println("Startup failed. Battery voltage = " + String(battVoltUpdate()) + " system will restart n");
+    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+    __DSB();
+    __WFI();
+    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
+  };
+
+  logFile.close();
+  
   sensor.RTCTemp.sensorCount = 1;
   hexstr(getChipId(), addr, sizeof(addr));  //Establish default node ID. Overwrite if specified in config
   NodeID = String(addr);
@@ -169,17 +190,13 @@ void setup () {
   }
   sendLoRaIgnore(String(NodeID) + ": sLoRa started");
 
-  //SD card
-  if (!SD.begin(SD_SPI_CS)) {
-    //SerialUSB.println("SD initialization failed!");
-    crashNflash(1);  //10*10ms high period
-  }
   OneWireTempSetup(); //Must auto detect sensors BEFORE configRead()
   configRead();
   sendLoRaIgnore("Config updated");
 
 
   while (LoRaRepeater) {
+    resetWDT();
     LoRaListen(999);   //Enter 999 for no timeout
     String tmp = LoRaReceive.packet;
     int i = 0;
@@ -203,8 +220,6 @@ void setup () {
   }
 
   Wire.begin(); //Might not need this
-  setupWDT( WATCHDOG_TIMER_MS );
-
   pinMode(LED, OUTPUT);
   digitalWrite(LED, LOW);
 
@@ -313,12 +328,13 @@ void setup () {
   updatePollFreq(); //Calculate sensor poll frequencies
   tarSec = LoRaPollOffset % (pollPeriod * 60); //Gives us the target start second for polling
 
+
   internalrtc.begin(false);
   internalrtc.attachInterrupt(wake_from_sleep);
 
   analogReference(AR_INTERNAL2V23); //For internal battery level calculation
 
-
+  resetWDT();
   sendLoRaIgnore("Going to sleep to sync time");
   if (!TEST_LOOP) {
     sleepTillSynced();
@@ -351,6 +367,16 @@ void loop () {
   }
 
   resetWDT();
+  
+  if (battVoltUpdate() < 3.5) { // If battery less that 3.5v, sleep and reset via wdt
+    logFile = SD.open("debug.txt", FILE_WRITE);
+    logFile.println("Loop restart at: " + normTimestamp +". Battery voltage = " + String(battVoltUpdate()) + " system will restart \n");
+    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+    __DSB();
+    __WFI();
+    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
+  };
   wake_system();
 
 
@@ -492,7 +518,7 @@ void sleep() {
     else if (!SLEEP_ENABLED) {
       delay(sleep_remaining_s * 1000);
     }
-    sleep_remaining_s = sleep_remaining_s - (internalrtc.getEpoch() - sleep_now_time); // Restarts clock in case of wake due to rain interupt
+    sleep_remaining_s =  - (internalrtc.getEpoch() - sleep_now_time); // Restarts clock in case of wake due to rain interupt
   }
 }
 

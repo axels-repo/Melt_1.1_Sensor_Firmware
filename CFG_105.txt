@@ -7,9 +7,9 @@ M.E.L.T. SYSTEM CONFIG FILE
 SYSTEM CONFIG___________________________________________________
 Project_ID	=TST;		//3 character MAX
 Site_ID		=AA;		//3 character MAX
-Node_ID		=YEET;		//4 character MAX
-LoRaPollOffset	=23;		//Packet send offset (seconds)
-PollPerLoRa	=5;		//Cycles per LoRa packet
+Node_ID		=TST;		//4 character MAX
+LoRaPollOffset	=13;		//Packet send offset (seconds)
+PollPerLoRa	=1;		//Cycles per LoRa packet
 LoRa_EN		=1;		//LoRa enabled. Set 0 or 1
 SD_EN		=1;		//SD logging enabled. Set 0 or 1
 
@@ -20,9 +20,9 @@ Nodes_to_repeat ={BBMO,BBBA,ASSS};	//Max 10 nodes
 SENSORS_________________________________________________________
 ALS_Count	=1;		//How many ALS sensors connected
 ALS_Period	=1;		//ALS poll period (minutes)
-ALS_cal_temps	={6,15,22,29};		//From smallest to largest
-ALS_cal_slopes	={1.271525,1.28783,1.299304,1.30235};		//Same order as temp
-ALS_cal_offsets	={-1250.34,-1290.16,-1321.63,-1331.37};		//Same order as temp
+ALS_cal_temps	={4,33};		//From smallest to largest
+ALS_cal_slopes	={0.5022,0.5022};		//Same order as temp
+ALS_cal_offsets	={-494.6613957,-494.6613957};		//Same order as temp
 Temp_Count	=1;		//This is automatically detected. No need to change
 Temp_Period	=1;		//Temp poll period (minutes)
 USS_Count	=0;		//How many Ultrasonic sensors connected
