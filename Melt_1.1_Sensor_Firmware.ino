@@ -151,6 +151,9 @@ volatile bool rain_interrupt = false;
 
 void setup () {
   setupWDT( WATCHDOG_TIMER_MS );
+  analogReference(AR_INTERNAL2V23); //For internal battery level calculation
+
+
 
     //SD card
   if (!SD.begin(SD_SPI_CS)) {
@@ -159,6 +162,8 @@ void setup () {
   }
 
   if (battVoltUpdate() < 3.5) { // If battery less that 3.5v, sleep and reset via wdt
+    rf95.init();
+    rf95.sleep();
     debugWrite("Startup failed. Battery voltage = " + String(battVoltUpdate()) + " system will restart \n");
     SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
@@ -330,7 +335,7 @@ void setup () {
   internalrtc.begin(false);
   internalrtc.attachInterrupt(wake_from_sleep);
 
-  analogReference(AR_INTERNAL2V23); //For internal battery level calculation
+
 
   resetWDT();
   sendLoRaIgnore("Going to sleep to sync time");
@@ -343,7 +348,10 @@ void setup () {
 
   setupWDT( WATCHDOG_TIMER_MS ); // initialize and activate WDT with maximum period
 
+  buildTimestamps();
   debugWrite(String("Node ") + NodeID + " successfuly started. Start time: "+normTimestamp+"\n");
+
+  
   //Rain gauge. Add last to ensure the interrupt doesn't interfere with initial time sync
   if (sensor.rainGauge.sensorCount > 0) {
     pinMode(RAIN_GAUGE_INT, INPUT_PULLUP);
@@ -370,12 +378,7 @@ void loop () {
   
   if (battVoltUpdate() < 3.5) { // If battery less that 3.5v, sleep and reset via wdt
     debugWrite("Loop restart at: " + normTimestamp +". Battery voltage = " + String(battVoltUpdate()) + " system will restart \n");
-    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
-    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-    __DSB();
-    __WFI();
-    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
-  };
+    systemReset();};
   wake_system();
 
 
@@ -619,6 +622,7 @@ void sendLoRaIgnore(String msg) { //Thrown out at the gateway
 float battVoltUpdate() {
   float BATT_LVL = analogRead(BATT);
   BATT_LVL = BATT_LVL / 1024 * 2.23 * 2 + BV_OFFSET;
+  // BATT_LVL = BATT_LVL * (5.0 / 1023.0);
   return BATT_LVL;
 }
 
